@@ -1,2 +1,22 @@
-# **OAuth2**
-https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
+# **Database**
+
+## Sumary
+Creation of a database(s) cluster based on CQRS.
+
+```
+                |---------------|
+                | HybridCluster |
+                |---------------|
+                A               A
+|------------------|          |-----------------|
+| WriteOnlyCluster |          | ReadOnlyCluster |
+|------------------|          |-----------------|
+        A                           A
+|----------------------|  |---------------------|
+| WriteOnlyDatabase(s) |  | ReadOnlyDatabase(s) |
+|----------------------|  |---------------------|
+    - select                    - insert
+                                - update
+                                - delete
+
+```

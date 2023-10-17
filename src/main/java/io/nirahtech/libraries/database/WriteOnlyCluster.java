@@ -6,14 +6,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import io.nirahtech.libraries.database.sql.Sql;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public final class WriteOnlyCluster extends AbstractCluster implements WriteOnly {
 
     private final WriteOnlyDatabase writeOnlyMaster;
     private final Collection<WriteOnlyDatabase> writeOnlyNodes = new HashSet<>();
-    private Runnable onChangeEventLister = null;
+    private BiConsumer<ChangeOperation, Object> onChangeEventLister = null;
 
     public WriteOnlyCluster(final Database master, final Set<Database> replicas) {
         super(master, replicas);
@@ -28,55 +28,52 @@ public final class WriteOnlyCluster extends AbstractCluster implements WriteOnly
         return this.writeOnlyNodes;
     }
 
-    final void setOnChangeEventLister(Runnable onChangeEventLister) {
+    final void setOnChangeEventLister(BiConsumer<ChangeOperation, Object> onChangeEventLister) {
         this.onChangeEventLister = onChangeEventLister;
     }
 
-    private final void throwOnChangeEventListerner() {
+    private final void fireOnChangeEventListerner(final ChangeOperation changeOperation, Object object) {
+        System.out.println("fireOnChangeEventListerner");
         if (Objects.nonNull(this.onChangeEventLister)) {
-            this.onChangeEventLister.run();
+            this.onChangeEventLister.accept(changeOperation, object);
         }
     }
 
     
     @Override
-    public int insert(Sql sql) {
-        int totalAffectedRows = this.getWriteOnlyMaster().insert(sql);
-        this.throwOnChangeEventListerner();
-        final ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS);
-        executorService.submit(() -> {
-            this.getWriteOnlyNodes().forEach(database -> {
-                database.insert(sql);
+    public <T> T insert(T data) {
+        this.getWriteOnlyMaster().insert(data);
+        this.fireOnChangeEventListerner(ChangeOperation.INSERT, data);
+        try (ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS)) {
+            executorService.submit(() -> {
+                this.getWriteOnlyNodes().forEach(node -> node.insert(data));
             });
-        });
-        return totalAffectedRows;
+        }
+        return data;
 
     }
 
     @Override
-    public int update(Sql sql) {
-        int totalAffectedRows = this.getWriteOnlyMaster().update(sql);
-        this.throwOnChangeEventListerner();
-        final ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS);
-        executorService.submit(() -> {
-            this.getWriteOnlyNodes().forEach(database -> {
-                database.update(sql);
+    public <T> T update(T data) {
+        this.getWriteOnlyMaster().update(data);
+        this.fireOnChangeEventListerner(ChangeOperation.UPDATE, data);
+        try (ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS)) {
+            executorService.submit(() -> {
+                this.getWriteOnlyNodes().forEach(node -> node.update(data));
             });
-        });
-        return totalAffectedRows;
+        }
+        return data;
     }
 
     @Override
-    public int delete(Sql sql) {
-        int totalAffectedRows = this.getWriteOnlyMaster().delete(sql);
-        this.throwOnChangeEventListerner();
-        final ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS);
-        executorService.submit(() -> {
-            this.getWriteOnlyNodes().forEach(database -> {
-                database.delete(sql);
+    public <T> void delete(T data) {
+        this.getWriteOnlyMaster().delete(data);
+        this.fireOnChangeEventListerner(ChangeOperation.DELETE, data);
+        try (ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS)) {
+            executorService.submit(() -> {
+                this.getWriteOnlyNodes().forEach(node -> node.delete(data));
             });
-        });
-        return totalAffectedRows;
+        }
     }
     
 }

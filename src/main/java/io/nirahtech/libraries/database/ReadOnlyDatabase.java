@@ -1,13 +1,14 @@
 package io.nirahtech.libraries.database;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.List;
 
-import io.nirahtech.libraries.database.sql.Sql;
+import org.hibernate.Session;
+
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 public final class ReadOnlyDatabase extends AbstractDatabase implements ReadOnly {
 
@@ -16,19 +17,14 @@ public final class ReadOnlyDatabase extends AbstractDatabase implements ReadOnly
     }
 
     @Override
-    public ResultSet select(Sql sql) {
-        final String sqlQuery = sql.toSql();
-        if (!sqlQuery.toUpperCase().startsWith("SELECT ")) {
-            throw new RuntimeException("Unsupported operation");
-        }
-        ResultSet resultSet;
-        System.out.println(sqlQuery);
-        try (Connection connection = DriverManager.getConnection(super.connectionString); Statement statement = connection.createStatement()) {
-            resultSet = statement.executeQuery(sqlQuery);
-        } catch (SQLException exception) {
-            throw new RuntimeException(exception);
-        }
-        return resultSet;
+    public <T> List<T> select(Class<T> table) {
+        Session session = super.orm().openSession();
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(table);
+        Root<T> rootEntry = criteriaQuery.from(table);
+        CriteriaQuery<T> all = criteriaQuery.select(rootEntry);
+        TypedQuery<T> allQuery = session.createQuery(all);
+        return allQuery.getResultList();
     }
 
 }

@@ -1,9 +1,7 @@
 package io.nirahtech.libraries.database;
 
-import java.sql.ResultSet;
-
-import io.nirahtech.libraries.database.sql.Sql;
+import java.util.List;
 
 sealed interface ReadOnly extends AccessMode permits ReadOnlyCluster, ReadOnlyDatabase {
-    ResultSet select(Sql sql);
+    <T> List<T> select(Class<T> table);
 }

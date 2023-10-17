@@ -3,9 +3,8 @@ package io.nirahtech.libraries.database;
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-import io.nirahtech.libraries.database.sql.Sql;
 
 public final class ReadOnlyCluster extends AbstractCluster implements ReadOnly {
 
@@ -26,8 +25,8 @@ public final class ReadOnlyCluster extends AbstractCluster implements ReadOnly {
     }
 
     @Override
-    public ResultSet select(Sql sql) {
-        return this.getReadOnlyMaster().select(sql);
+    public <T> List<T> select(Class<T> table) {
+        return this.getReadOnlyMaster().select(table);
     }
 
 }

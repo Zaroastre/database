@@ -1,12 +1,10 @@
 package io.nirahtech.libraries.database;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 
-import io.nirahtech.libraries.database.sql.Sql;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
 
 public final class WriteOnlyDatabase extends AbstractDatabase implements WriteOnly {
 
@@ -15,48 +13,29 @@ public final class WriteOnlyDatabase extends AbstractDatabase implements WriteOn
     }
     
     @Override
-    public int insert(Sql sql) {
-        final String sqlQuery = sql.toSql();
-        if (!sqlQuery.toUpperCase().startsWith("INSERT INTO ")) {
-            throw new RuntimeException("Unsupported operation");
-        }
-        int totalAffectedRows;
-        try (Connection connection = DriverManager.getConnection(super.connectionString); Statement statement = connection.createStatement()) {
-            totalAffectedRows = statement.executeUpdate(sqlQuery);
-        } catch (SQLException exception) {
-            throw new RuntimeException(exception);
-        }
-        return totalAffectedRows;
+    public <T> T insert(T data) {
+        Session session = super.orm().openSession();
+        Transaction transaction = session.beginTransaction();
+        session.persist(data);
+        transaction.commit();
+        return data;
     }
 
     @Override
-    public int update(Sql sql) {
-        final String sqlQuery = sql.toSql();
-        if (!sqlQuery.toUpperCase().startsWith("UPDATE ")) {
-            throw new RuntimeException("Unsupported operation");
-        }
-        int totalAffectedRows;
-        try (Connection connection = DriverManager.getConnection(super.connectionString); Statement statement = connection.createStatement()) {
-            totalAffectedRows = statement.executeUpdate(sqlQuery);
-        } catch (SQLException exception) {
-            throw new RuntimeException(exception);
-        }
-        return totalAffectedRows;
+    public <T> T update(T data) {
+        Session session = super.orm().openSession();
+        Transaction transaction = session.beginTransaction();
+        session.merge(data);
+        transaction.commit();
+        return data;
     }
 
     @Override
-    public int delete(Sql sql) {
-        final String sqlQuery = sql.toSql();
-        if (!sqlQuery.toUpperCase().startsWith("DELETE ")) {
-            throw new RuntimeException("Unsupported operation");
-        }
-        int totalAffectedRows;
-        try (Connection connection = DriverManager.getConnection(super.connectionString); Statement statement = connection.createStatement()) {
-            totalAffectedRows = statement.executeUpdate(sqlQuery);
-        } catch (SQLException exception) {
-            throw new RuntimeException(exception);
-        }
-        return totalAffectedRows;
+    public <T> void delete(T data) {
+        Session session = super.orm().openSession();
+        Transaction transaction = session.beginTransaction();
+        session.remove(data);
+        transaction.commit();
     }
     
 }
