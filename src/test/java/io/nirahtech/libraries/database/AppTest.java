@@ -7,6 +7,10 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+
 /**
  * Unit test for simple App.
  */
@@ -48,6 +52,13 @@ class AppTest {
             System.out.println(
                 hybridCluster.readOnlyCluster().select(Vilain.class)
             );
+
+            hybridCluster.readOnlyCluster().search(Vilain.class, (criteriaQuery) -> {
+                Root<Vilain> rootEntry = criteriaQuery.from(table);
+                CriteriaQuery<Vilain> all = criteriaQuery.select(rootEntry);
+                TypedQuery<Vilain> allQuery = session.createQuery(all);
+                return allQuery.getResultList();
+            })
         }
     }
 }
