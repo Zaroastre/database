@@ -53,12 +53,12 @@ class AppTest {
                 hybridCluster.readOnlyCluster().select(Vilain.class)
             );
 
-            hybridCluster.readOnlyCluster().search(Vilain.class, (criteriaQuery) -> {
+            hybridCluster.readOnlyCluster().search(Vilain.class, (session, table, criteriaQuery) -> {
                 Root<Vilain> rootEntry = criteriaQuery.from(table);
                 CriteriaQuery<Vilain> all = criteriaQuery.select(rootEntry);
                 TypedQuery<Vilain> allQuery = session.createQuery(all);
                 return allQuery.getResultList();
-            })
+            });
         }
     }
 }

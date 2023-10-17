@@ -4,12 +4,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.hibernate.Session;
 
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 
 public final class ReadOnlyCluster extends AbstractCluster implements ReadOnly {
 
@@ -35,7 +33,7 @@ public final class ReadOnlyCluster extends AbstractCluster implements ReadOnly {
     }
 
     @Override
-    public <T> List<T> search(Class<T> table, Function<Session, Class<T>, Root<T>, CriteriaQuery<T>, List<T>> filter) {
+    public <T> List<T> search(Class<T> table, JpaQuery<Session, Class<T>, CriteriaQuery<T>, List<T>> filter) {
         return this.getReadOnlyMaster().search(table, filter);
     }
 

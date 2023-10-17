@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public final class WriteOnlyCluster extends AbstractCluster implements WriteOnly {
 
@@ -44,11 +43,11 @@ public final class WriteOnlyCluster extends AbstractCluster implements WriteOnly
     public <T> T insert(T data) {
         this.getWriteOnlyMaster().insert(data);
         this.fireOnChangeEventListerner(ChangeOperation.INSERT, data);
-        try (ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS)) {
+        ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS);
             executorService.submit(() -> {
                 this.getWriteOnlyNodes().forEach(node -> node.insert(data));
             });
-        }
+        
         return data;
 
     }
@@ -57,11 +56,10 @@ public final class WriteOnlyCluster extends AbstractCluster implements WriteOnly
     public <T> T update(T data) {
         this.getWriteOnlyMaster().update(data);
         this.fireOnChangeEventListerner(ChangeOperation.UPDATE, data);
-        try (ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS)) {
+        ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS);
             executorService.submit(() -> {
                 this.getWriteOnlyNodes().forEach(node -> node.update(data));
             });
-        }
         return data;
     }
 
@@ -69,11 +67,10 @@ public final class WriteOnlyCluster extends AbstractCluster implements WriteOnly
     public <T> void delete(T data) {
         this.getWriteOnlyMaster().delete(data);
         this.fireOnChangeEventListerner(ChangeOperation.DELETE, data);
-        try (ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS)) {
+        ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREAD_FOR_REPLICATIONS);
             executorService.submit(() -> {
                 this.getWriteOnlyNodes().forEach(node -> node.delete(data));
             });
-        }
     }
     
 }

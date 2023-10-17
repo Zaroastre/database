@@ -2,7 +2,6 @@ package io.nirahtech.libraries.database;
 
 import java.io.File;
 import java.util.List;
-import java.util.function.Function;
 
 import org.hibernate.Session;
 
@@ -29,15 +28,11 @@ public final class ReadOnlyDatabase extends AbstractDatabase implements ReadOnly
     }
 
     @Override
-    public <T> List<T> search(Class<T> table, ThreeFunction<Session, Class<T>, Root<T>, CriteriaQuery<T>, List<T>> filter) {
-        Session session = super.orm().openSession();
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(table);
-        Root<T> rootEntry = criteriaQuery.from(table);
-        CriteriaQuery<T> all = criteriaQuery.select(rootEntry);
-        TypedQuery<T> allQuery = session.createQuery(all);
-        // return allQuery.getResultList();
-        return filter.execute(session, table, rootEntry, criteriaQuery);
+    public <T> List<T> search(Class<T> table, JpaQuery<Session, Class<T>, CriteriaQuery<T>, List<T>> filter) {
+        final Session session = super.orm().openSession();
+        final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        final CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(table);
+        return filter.search(session, table, criteriaQuery);
     }
 
 }
